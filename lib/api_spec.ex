@@ -367,6 +367,18 @@ defmodule Swole.APISpec do
 
   def infer_json_schema(nil, %{} = _schema), do: "possibly null"
 
+  def infer_json_schema(resp_body, %{} = schema) when is_struct(resp_body, Date) do
+    schema
+    |> Map.put(:type, "string")
+    |> Map.put(:format, "date")
+  end
+
+  def infer_json_schema(resp_body, %{} = schema) when is_struct(resp_body, DateTime) do
+    schema
+    |> Map.put(:type, "string")
+    |> Map.put(:format, "datetime")
+  end
+
   def infer_json_schema(resp_body, %{} = schema) when is_map(resp_body) do
     schema
     |> Map.put(:type, "object")
@@ -376,7 +388,8 @@ defmodule Swole.APISpec do
   def infer_json_schema(resp_body, %{} = schema) when is_list(resp_body) do
     schema
     |> Map.put(:type, "array")
-    |> Map.put(:items,
+    |> Map.put(
+      :items,
       resp_body
       |> Enum.map(&infer_json_schema(&1, %{}))
       |> Enum.uniq()

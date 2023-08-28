@@ -361,7 +361,7 @@ defmodule Swole.APISpec do
   end
 
   # TODO: add support for other content types like ... XML if we must
-  defp schema(_conn, "text/plain") do
+  defp schema(_conn, _other) do
     %{type: "string"}
   end
 

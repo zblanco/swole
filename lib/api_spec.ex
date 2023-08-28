@@ -388,5 +388,11 @@ defmodule Swole.APISpec do
   def infer_json_schema(resp_body, %{} = schema) when is_float(resp_body),
     do: schema |> Map.put(:type, "number") |> Map.put(:format, "float")
 
+  def infer_json_schema(resp_body, %{} = schema) when is_boolean(resp_body),
+    do: Map.put(schema, :type, "boolean")
+
+  def infer_json_schema(resp_body, %{} = schema) when is_atom(resp_body),
+    do: Map.put(schema, :type, "string")
+
   def infer_json_schema({k, v}, %{} = schema), do: Map.put(schema, k, infer_json_schema(v, %{}))
 end

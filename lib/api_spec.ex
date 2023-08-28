@@ -379,7 +379,7 @@ defmodule Swole.APISpec do
     |> Map.put(:items,
       resp_body
       |> Enum.map(&infer_json_schema(&1, %{}))
-      |> Enum.uniq()
+      |> Enum.uniq_by(&:erlang.phash2/1)
     )
   end
 

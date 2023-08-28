@@ -373,7 +373,7 @@ defmodule Swole.APISpec do
     |> Map.put(:format, "date")
   end
 
-  def infer_json_schema(resp_body, %{} = schema) when is_struct(resp_body, DateTime) do
+  def infer_json_schema(resp_body, %{} = schema) when is_struct(resp_body, DateTime) or is_struct(resp_body, NaiveDateTime) do
     schema
     |> Map.put(:type, "string")
     |> Map.put(:format, "datetime")

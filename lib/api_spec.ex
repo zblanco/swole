@@ -356,9 +356,14 @@ defmodule Swole.APISpec do
   # and name them off of the path and method and the hash
   defp schema(conn, content_type) when content_type in ["json", "application/json"] do
     conn.resp_body
-    |> Jason.decode!()
-    |> dbg(label: "resp_body of decoded json")
-    |> infer_json_schema(%{})
+    |> Jason.decode()
+    |> case do
+      {:ok, decoded} ->
+        infer_json_schema(decoded, %{})
+
+      {:error, _} ->
+        %{type: "string"}
+    end
   end
 
   # TODO: add support for other content types like ... XML if we must

@@ -376,7 +376,11 @@ defmodule Swole.APISpec do
   def infer_json_schema(resp_body, %{} = schema) when is_list(resp_body) do
     schema
     |> Map.put(:type, "array")
-    |> Map.put(:items, Enum.map(resp_body, &infer_json_schema(&1, %{})))
+    |> Map.put(:items,
+      resp_body
+      |> Enum.map(&infer_json_schema(&1, %{}))
+      |> Enum.uniq()
+    )
   end
 
   def infer_json_schema(resp_body, %{} = schema) when is_binary(resp_body),

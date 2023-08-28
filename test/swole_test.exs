@@ -1,8 +1,12 @@
 defmodule SwoleTest do
   use ExUnit.Case
-  alias Plug.Conn
-  alias Phoenix.ConnTest
+  # alias Plug.Conn
+  # alias Phoenix.ConnTest
   doctest Swole
+
+  # scaffolding for plug.conns that simulate a phoenix conn test for scenarios where we want to generate specs
+  # unit test the %Swole.APISpec{} construction based on lists of conns with request/response payloads as desired
+  # Most of the testing value comes from the construction of the %Swole.APISpec{} struct - everything else are smaller dependency injections
 
   @test_spec %Swole.APISpec{
     openapi: "3.1.0",

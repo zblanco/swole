@@ -22,6 +22,7 @@ defmodule Swole.MixProject do
   defp deps do
     [
       {:plug, ">= 1.0.0"},
+      # {:phoenix, ">= 1.5.0", only: [:dev, :test], optional: true},
       {:jason, "~> 1.2"},
       {:ex_doc, "~> 0.28", only: :dev}
     ]

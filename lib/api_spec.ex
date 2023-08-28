@@ -357,6 +357,7 @@ defmodule Swole.APISpec do
   defp schema(conn, content_type) when content_type in ["json", "application/json"] do
     conn.resp_body
     |> Jason.decode!()
+    |> dbg(label: "resp_body of decoded json")
     |> infer_json_schema(%{})
   end
 
@@ -377,7 +378,7 @@ defmodule Swole.APISpec do
       when is_struct(resp_body, DateTime) or is_struct(resp_body, NaiveDateTime) do
     schema
     |> Map.put(:type, "string")
-    |> Map.put(:format, "datetime")
+    |> Map.put(:format, "date-time")
   end
 
   def infer_json_schema(resp_body, %{} = schema) when is_struct(resp_body) do

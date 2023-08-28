@@ -373,10 +373,23 @@ defmodule Swole.APISpec do
     |> Map.put(:format, "date")
   end
 
-  def infer_json_schema(resp_body, %{} = schema) when is_struct(resp_body, DateTime) or is_struct(resp_body, NaiveDateTime) do
+  def infer_json_schema(resp_body, %{} = schema)
+      when is_struct(resp_body, DateTime) or is_struct(resp_body, NaiveDateTime) do
     schema
     |> Map.put(:type, "string")
     |> Map.put(:format, "datetime")
+  end
+
+  def infer_json_schema(resp_body, %{} = schema) when is_struct(resp_body) do
+    schema
+    |> Map.put(:type, "object")
+    |> Map.put(
+      :properties,
+      resp_body
+      |> Map.from_struct()
+      |> Map.drop(~w(__meta__)a)
+      |> Enum.map(&infer_json_schema(&1, %{}))
+    )
   end
 
   def infer_json_schema(resp_body, %{} = schema) when is_map(resp_body) do
@@ -393,7 +406,6 @@ defmodule Swole.APISpec do
       resp_body
       |> Enum.map(&infer_json_schema(&1, %{}))
       |> Enum.uniq()
-      |> dbg(label: "array items post uniq")
     )
   end
 

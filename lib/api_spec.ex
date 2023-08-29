@@ -97,9 +97,12 @@ defmodule Swole.APISpec do
   end
 
   defp request_path_pattern(conn) do
-    Enum.reduce(conn.path_params, conn.request_path, fn {k, v}, req_acc ->
-      req_acc |> String.replace(v, "{#{k}}") |> String.replace(~r"\.[^.]+$", "") # regex to remove file extension from url paths if present
+    conn.path_params
+    |> Enum.reduce(conn.request_path, fn {k, v}, req_acc ->
+      String.replace(req_acc, v, "{#{k}}")
     end)
+    # regex to remove file extension from url paths if present
+    |> String.replace(~r"\.[^.]+$", "")
   end
 
   defp tags(%{tags: tags}, conn_records) do
@@ -373,7 +376,7 @@ defmodule Swole.APISpec do
     %{type: "string"}
   end
 
-  def infer_json_schema(nil, %{} = _schema), do: %{type: "object", nullable: true}
+  def infer_json_schema(nil, %{} = _schema), do: %{type: "object"}
 
   def infer_json_schema(resp_body, %{} = schema) when is_struct(resp_body, Date) do
     schema

@@ -329,6 +329,7 @@ defmodule Swole.APISpec do
   defp content_type_of_header(header) do
     cond do
       String.contains?(header, "application/json") -> "application/json"
+      String.contains?(header, "text/csv") -> "text/csv"
       true -> header
     end
   end
@@ -339,7 +340,7 @@ defmodule Swole.APISpec do
 
   defp content_type_of_body(_otherwise), do: "default"
 
-  defp request_schema(conn, content_type) when content_type in ["json", "application/json"] do
+  defp request_schema(conn, content_type) when content_type in ["json", "application/json", "text/csv"] do
     %{
       schema: infer_json_schema(conn.body_params, %{}),
       example: conn.body_params

@@ -395,7 +395,7 @@ defmodule Swole.APISpec do
       resp_body
       |> Map.from_struct()
       |> Map.drop(~w(__meta__)a)
-      |> Enum.map(&infer_json_schema(&1, %{}))
+      |> Map.new(&infer_json_schema(&1, %{}))
     )
   end
 

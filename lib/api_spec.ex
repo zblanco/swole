@@ -340,7 +340,8 @@ defmodule Swole.APISpec do
 
   defp content_type_of_body(_otherwise), do: "default"
 
-  defp request_schema(conn, content_type) when content_type in ["json", "application/json", "text/csv"] do
+  defp request_schema(conn, content_type)
+       when content_type in ["json", "application/json", "text/csv"] do
     %{
       schema: infer_json_schema(conn.body_params, %{}),
       example: conn.body_params
@@ -395,14 +396,14 @@ defmodule Swole.APISpec do
       resp_body
       |> Map.from_struct()
       |> Map.drop(~w(__meta__)a)
-      |> Map.new(&infer_json_schema(&1, %{}))
+      |> Map.new(fn {k, v} -> {k, infer_json_schema(v, %{})} end)
     )
   end
 
   def infer_json_schema(resp_body, %{} = schema) when is_map(resp_body) do
     schema
     |> Map.put(:type, "object")
-    |> Map.put(:properties, Enum.map(resp_body, &infer_json_schema(&1, %{})))
+    |> Map.put(:properties, Map.new(resp_body, fn {k, v} -> {k, infer_json_schema(v, %{})} end))
   end
 
   def infer_json_schema(resp_body, %{} = schema) when is_list(resp_body) do

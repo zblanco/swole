@@ -98,7 +98,7 @@ defmodule Swole.APISpec do
 
   defp request_path_pattern(conn) do
     Enum.reduce(conn.path_params, conn.request_path, fn {k, v}, req_acc ->
-      String.replace(req_acc, v, "{#{k}}")
+      req_acc |> String.replace(v, "{#{k}}") |> String.replace(~r"\.[^.]+$", "") # regex to remove file extension from url paths if present
     end)
   end
 

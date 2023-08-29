@@ -373,7 +373,7 @@ defmodule Swole.APISpec do
     %{type: "string"}
   end
 
-  def infer_json_schema(nil, %{} = _schema), do: "possibly null"
+  def infer_json_schema(nil, %{} = _schema), do: %{type: "object", nullable: true}
 
   def infer_json_schema(resp_body, %{} = schema) when is_struct(resp_body, Date) do
     schema

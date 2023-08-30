@@ -94,12 +94,12 @@ defmodule Swole.APISpec do
            operation_for_method = operation_for_method(conns_for_path, method)
 
            unless is_nil(operation_for_method) do
-             conns = Map.get(conns_for_operation_id, operation_for_method.operation_id)
+             conns = Map.get(conns_for_operation_id, operation_for_method.operationId)
 
              operation =
                if Enum.count(conns) > 1 do
                  operation_id = "#{operation_for_method.operation_id}_#{:erlang.phash2(path)}"
-                 Map.put(operation_for_method, :operation_id, operation_id)
+                 Map.put(operation_for_method, :operationId, operation_id)
                else
                  operation_for_method
                end

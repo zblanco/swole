@@ -103,6 +103,7 @@ defmodule Swole.APISpec do
     end)
     # regex to remove file extension from url paths if present
     |> String.replace(~r"\.[^.]+$", "")
+    |> dbg(label: "request_path_pattern")
   end
 
   defp tags(%{tags: tags}, conn_records) do

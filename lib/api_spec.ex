@@ -76,6 +76,13 @@ defmodule Swole.APISpec do
   end
 
   defp paths(conn_records) do
+    conns_for_operation_id =
+      conn_records
+      |> Enum.group_by(fn conn ->
+        conn.assigns.swole_opts[:operation_id]
+      end)
+      |> Map.new()
+
     conn_records
     |> Enum.group_by(&request_path_pattern/1)
     |> Map.new(fn {path, conns_for_path} ->
@@ -87,7 +94,17 @@ defmodule Swole.APISpec do
            operation_for_method = operation_for_method(conns_for_path, method)
 
            unless is_nil(operation_for_method) do
-             Map.put(acc, String.downcase(method), operation_for_method)
+             conns = Map.get(conns_for_operation_id, operation_for_method.operation_id)
+
+             operation =
+               if Enum.count(conns) > 1 do
+                 operation_id = "#{operation_for_method.operation_id}_#{:erlang.phash2(path)}"
+                 Map.put(operation_for_method, :operation_id, operation_id)
+               else
+                 operation_for_method
+               end
+
+             Map.put(acc, String.downcase(method), operation)
            else
              acc
            end
@@ -103,7 +120,6 @@ defmodule Swole.APISpec do
     end)
     # regex to remove file extension from url paths if present
     |> String.replace(~r"\.[^.]+$", "")
-    |> dbg(label: "request_path_pattern")
   end
 
   defp tags(%{tags: tags}, conn_records) do

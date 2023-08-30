@@ -34,7 +34,7 @@ defmodule Swole.Formatter do
   defp generate_docs(config) do
     records = Swole.get_records(config[:name])
 
-    api_spec = APISpec.new(config, records) |> dbg()
+    api_spec = APISpec.new(config, records)
     # consider spec validation to raise an error
 
     writers = config[:writers]

@@ -76,6 +76,13 @@ defmodule Swole.APISpec do
   end
 
   defp paths(conn_records) do
+    conns_for_operation_id =
+      conn_records
+      |> Enum.group_by(fn conn ->
+        conn.assigns.swole_opts[:operation_id]
+      end)
+      |> Map.new()
+
     conn_records
     |> Enum.group_by(&request_path_pattern/1)
     |> Map.new(fn {path, conns_for_path} ->
@@ -87,7 +94,17 @@ defmodule Swole.APISpec do
            operation_for_method = operation_for_method(conns_for_path, method)
 
            unless is_nil(operation_for_method) do
-             Map.put(acc, String.downcase(method), operation_for_method)
+             conns = Map.get(conns_for_operation_id, operation_for_method.operationId)
+
+             operation =
+               if Enum.count(conns) > 1 do
+                 operation_id = "#{operation_for_method.operationId}_#{:erlang.phash2(path)}"
+                 Map.put(operation_for_method, :operationId, operation_id)
+               else
+                 operation_for_method
+               end
+
+             Map.put(acc, String.downcase(method), operation)
            else
              acc
            end
@@ -97,9 +114,12 @@ defmodule Swole.APISpec do
   end
 
   defp request_path_pattern(conn) do
-    Enum.reduce(conn.path_params, conn.request_path, fn {k, v}, req_acc ->
-      String.replace(req_acc, v, "{#{k}}")
+    conn.path_params
+    |> Enum.reduce(conn.request_path, fn {k, v}, req_acc ->
+      String.replace(req_acc, "/#{v}", "/{#{k}}")
     end)
+    # regex to remove file extension from url paths if present
+    |> String.replace(~r"\.[^.]+$", "")
   end
 
   defp tags(%{tags: tags}, conn_records) do
@@ -329,6 +349,7 @@ defmodule Swole.APISpec do
   defp content_type_of_header(header) do
     cond do
       String.contains?(header, "application/json") -> "application/json"
+      String.contains?(header, "text/csv") -> "text/csv"
       true -> header
     end
   end
@@ -339,7 +360,8 @@ defmodule Swole.APISpec do
 
   defp content_type_of_body(_otherwise), do: "default"
 
-  defp request_schema(conn, content_type) when content_type in ["json", "application/json"] do
+  defp request_schema(conn, content_type)
+       when content_type in ["json", "application/json", "text/csv"] do
     %{
       schema: infer_json_schema(conn.body_params, %{}),
       example: conn.body_params
@@ -356,30 +378,62 @@ defmodule Swole.APISpec do
   # and name them off of the path and method and the hash
   defp schema(conn, content_type) when content_type in ["json", "application/json"] do
     conn.resp_body
-    |> Jason.decode!()
-    |> infer_json_schema(%{})
+    |> Jason.decode()
+    |> case do
+      {:ok, decoded} ->
+        infer_json_schema(decoded, %{})
+
+      {:error, _} ->
+        %{type: "string"}
+    end
   end
 
   # TODO: add support for other content types like ... XML if we must
-  defp schema(_conn, "text/plain") do
+  defp schema(_conn, _other) do
     %{type: "string"}
   end
 
-  def infer_json_schema(nil, %{} = _schema), do: "possibly null"
+  def infer_json_schema(nil, %{} = _schema), do: %{type: "object"}
+
+  def infer_json_schema(resp_body, %{} = schema) when is_struct(resp_body, Date) do
+    schema
+    |> Map.put(:type, "string")
+    |> Map.put(:format, "date")
+  end
+
+  def infer_json_schema(resp_body, %{} = schema)
+      when is_struct(resp_body, DateTime) or is_struct(resp_body, NaiveDateTime) do
+    schema
+    |> Map.put(:type, "string")
+    |> Map.put(:format, "date-time")
+  end
+
+  def infer_json_schema(resp_body, %{} = schema) when is_struct(resp_body) do
+    schema
+    |> Map.put(:type, "object")
+    |> Map.put(
+      :properties,
+      resp_body
+      |> Map.from_struct()
+      |> Map.drop(~w(__meta__)a)
+      |> Map.new(fn {k, v} -> {k, infer_json_schema(v, %{})} end)
+    )
+  end
 
   def infer_json_schema(resp_body, %{} = schema) when is_map(resp_body) do
     schema
     |> Map.put(:type, "object")
-    |> Map.put(:properties, Enum.map(resp_body, &infer_json_schema(&1, %{})))
+    |> Map.put(:properties, Map.new(resp_body, fn {k, v} -> {k, infer_json_schema(v, %{})} end))
   end
 
   def infer_json_schema(resp_body, %{} = schema) when is_list(resp_body) do
     schema
     |> Map.put(:type, "array")
-    |> Map.put(:items,
+    |> Map.put(
+      :items,
       resp_body
       |> Enum.map(&infer_json_schema(&1, %{}))
-      |> Enum.uniq_by(&:erlang.phash2/1)
+      |> Enum.uniq()
     )
   end
 
